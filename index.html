@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Reflex Training</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .top-button {
+            width: 100%;
+            height: 25%;
+            background-color: green;
+            border: none;
+            outline: none;
+            cursor: pointer;
+        }
+        .bottom-buttons {
+            display: flex;
+            width: 100%;
+            height: 75%;
+        }
+        .bottom-buttons button {
+            flex: 1;
+            background-color: green;
+            border: none;
+            outline: none;
+            cursor: pointer;
+        }
+        .controls {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        input[type="number"] {
+            padding: 10px;
+            font-size: 16px;
+            width: 100px;
+        }
+        button#start-stop {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .checkbox-section {
+            position: absolute;
+            bottom: 5%;
+            left: 5%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .checkbox-section h5 {
+            margin: 0;
+        }
+        .hidden-inputs {
+            margin-top: 5px;
+            display: none;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <button class="top-button"></button>
+    <div class="bottom-buttons">
+        <button></button>
+        <button></button>
+        <button></button>
+    </div>
+    <div class="controls">
+        <input type="number" id="interval" placeholder="Interval (s)">
+        <input type="number" id="red-duration" placeholder="Red Duration (s)">
+        <button id="start-stop">Start</button>
+    </div>
+    <div class="checkbox-section">
+        <h4>Options:</h4>
+        <label><input type="checkbox" id="jab-cross"> Jab & Cross</label>
+        <div class="hidden-inputs" id="jab-cross-inputs">
+            <input type="number" id="jab-cross-interval" placeholder="Time Interval (s)">
+            <input type="number" id="jab-cross-appearance" placeholder="Appearance in Moves">
+        </div>
+        <label><input type="checkbox" id="hook-uppercut"> Hook & Uppercut</label>
+        <div class="hidden-inputs" id="hook-uppercut-inputs">
+            <input type="number" id="hook-uppercut-interval" placeholder="Time Interval (s)">
+            <input type="number" id="hook-uppercut-appearance" placeholder="Appearance in Moves">
+        </div>
+    </div>
+    <script>
+        const buttons = [...document.querySelectorAll('.top-button, .bottom-buttons button')];
+        const intervalInput = document.getElementById('interval');
+        const redDurationInput = document.getElementById('red-duration');
+        const startStopButton = document.getElementById('start-stop');
+        const jabCrossCheckbox = document.getElementById('jab-cross');
+        const hookUppercutCheckbox = document.getElementById('hook-uppercut');
+        const jabCrossInputs = document.getElementById('jab-cross-inputs');
+        const hookUppercutInputs = document.getElementById('hook-uppercut-inputs');
+        let interval = null;
+        let isJabCrossActive = false;
+        let isHookUppercutActive = false;
+
+        jabCrossCheckbox.addEventListener('change', () => {
+            jabCrossInputs.style.display = jabCrossCheckbox.checked ? 'flex' : 'none';
+        });
+
+        hookUppercutCheckbox.addEventListener('change', () => {
+            hookUppercutInputs.style.display = hookUppercutCheckbox.checked ? 'flex' : 'none';
+        });
+
+        function resetButtons() {
+            buttons.forEach(button => button.style.backgroundColor = 'green');
+        }
+
+        function randomButtonRed() {
+            const randomIndex = Math.floor(Math.random() * buttons.length);
+            resetButtons();
+            buttons[randomIndex].style.backgroundColor = 'red';
+            setTimeout(() => buttons[randomIndex].style.backgroundColor = 'green', parseFloat(redDurationInput.value) * 1000 || 500);
+        }
+
+        function jabCrossAction(probability, interval) {
+            if (Math.random() < probability && !isJabCrossActive && !isHookUppercutActive) {
+                isJabCrossActive = true;
+                resetButtons();
+                buttons[1].style.backgroundColor = 'red'; // Button 1 for Jab
+                setTimeout(() => {
+                    buttons[3].style.backgroundColor = 'red'; // Button 3 for Cross
+                    console.log("Jab & Cross");
+                    setTimeout(() => {
+                        resetButtons();
+                        isJabCrossActive = false;
+                    }, interval * 1000);
+                }, interval * 1000);
+            }
+        }
+
+        function hookUppercutAction(probability, interval) {
+            if (Math.random() < probability && !isHookUppercutActive && !isJabCrossActive) {
+                isHookUppercutActive = true;
+                resetButtons();
+                buttons[0].style.backgroundColor = 'red'; // Button 0 for Hook
+                setTimeout(() => {
+                    buttons[2].style.backgroundColor = 'red'; // Button 2 for Uppercut
+                    console.log("Hook & Uppercut");
+                    setTimeout(() => {
+                        resetButtons();
+                        isHookUppercutActive = false;
+                    }, interval * 1000);
+                }, interval * 1000);
+            }
+        }
+
+        startStopButton.addEventListener('click', () => {
+            if (interval) {
+                clearInterval(interval);
+                interval = null;
+                startStopButton.textContent = 'Start';
+                resetButtons();
+            } else {
+                const intervalTime = parseFloat(intervalInput.value) * 1000;
+                const jabCrossProb = 1 / (parseFloat(document.getElementById('jab-cross-appearance').value) || Infinity);
+                const jabCrossInterval = parseFloat(document.getElementById('jab-cross-interval').value) || 0.3;
+                const hookUppercutProb = 1 / (parseFloat(document.getElementById('hook-uppercut-appearance').value) || Infinity);
+                const hookUppercutInterval = parseFloat(document.getElementById('hook-uppercut-interval').value) || 0.3;
+
+                if (isNaN(intervalTime) || intervalTime <= 0) {
+                    alert('Please enter a valid interval in seconds.');
+                    return;
+                }
+
+                resetButtons();
+                startStopButton.textContent = 'Stop';
+                interval = setInterval(() => {
+                    randomButtonRed();
+                    if (jabCrossCheckbox.checked) jabCrossAction(jabCrossProb, jabCrossInterval);
+                    if (hookUppercutCheckbox.checked) hookUppercutAction(hookUppercutProb, hookUppercutInterval);
+                }, intervalTime);
+            }
+        });
+    </script>
+</body>
+</html>
