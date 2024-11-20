@@ -67,6 +67,32 @@
             display: none;
             gap: 10px;
         }
+
+        /* Stopwatch Styles */
+        #stopwatch-container {
+            position: absolute;
+            top: 5%;
+            right: 5%;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 20px;
+            width: 100px;
+            text-align: center;
+        }
+
+        #stopwatch-button {
+            background-color: green;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            font-size: 14px;
+            margin-top: 10px;
+            cursor: pointer;
+            border-radius: 3px;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
@@ -94,6 +120,13 @@
             <input type="number" id="hook-uppercut-appearance" placeholder="Appearance in Moves">
         </div>
     </div>
+
+    <!-- Stopwatch Section -->
+    <div id="stopwatch-container">
+        <div id="stopwatch-time">00.00</div>
+        <button id="stopwatch-button">Start</button>
+    </div>
+
     <script>
         const buttons = [...document.querySelectorAll('.top-button, .bottom-buttons button')];
         const intervalInput = document.getElementById('interval');
@@ -103,9 +136,14 @@
         const hookUppercutCheckbox = document.getElementById('hook-uppercut');
         const jabCrossInputs = document.getElementById('jab-cross-inputs');
         const hookUppercutInputs = document.getElementById('hook-uppercut-inputs');
+        const stopwatchTime = document.getElementById('stopwatch-time');
+        const stopwatchButton = document.getElementById('stopwatch-button');
         let interval = null;
-        let isJabCrossActive = false;
-        let isHookUppercutActive = false;
+
+        // Stopwatch variables
+        let stopwatchInterval = null;
+        let stopwatchRunning = false;
+        let elapsedTime = 0;
 
         jabCrossCheckbox.addEventListener('change', () => {
             jabCrossInputs.style.display = jabCrossCheckbox.checked ? 'flex' : 'none';
@@ -127,33 +165,23 @@
         }
 
         function jabCrossAction(probability, interval) {
-            if (Math.random() < probability && !isJabCrossActive && !isHookUppercutActive) {
-                isJabCrossActive = true;
-                resetButtons();
-                buttons[1].style.backgroundColor = 'red'; // Button 1 for Jab
+            if (Math.random() < probability) {
+                buttons[1].style.backgroundColor = 'red';
                 setTimeout(() => {
-                    buttons[3].style.backgroundColor = 'red'; // Button 3 for Cross
+                    buttons[3].style.backgroundColor = 'red';
                     console.log("Jab & Cross");
-                    setTimeout(() => {
-                        resetButtons();
-                        isJabCrossActive = false;
-                    }, interval * 1000);
+                    setTimeout(resetButtons, interval * 1000);
                 }, interval * 1000);
             }
         }
 
         function hookUppercutAction(probability, interval) {
-            if (Math.random() < probability && !isHookUppercutActive && !isJabCrossActive) {
-                isHookUppercutActive = true;
-                resetButtons();
-                buttons[0].style.backgroundColor = 'red'; // Button 0 for Hook
+            if (Math.random() < probability) {
+                buttons[0].style.backgroundColor = 'red';
                 setTimeout(() => {
-                    buttons[2].style.backgroundColor = 'red'; // Button 2 for Uppercut
+                    buttons[2].style.backgroundColor = 'red';
                     console.log("Hook & Uppercut");
-                    setTimeout(() => {
-                        resetButtons();
-                        isHookUppercutActive = false;
-                    }, interval * 1000);
+                    setTimeout(resetButtons, interval * 1000);
                 }, interval * 1000);
             }
         }
@@ -175,7 +203,6 @@
                     alert('Please enter a valid interval in seconds.');
                     return;
                 }
-
                 resetButtons();
                 startStopButton.textContent = 'Stop';
                 interval = setInterval(() => {
@@ -185,6 +212,41 @@
                 }, intervalTime);
             }
         });
+
+        // Stopwatch functions
+        function startStopwatch() {
+            stopwatchRunning = true;
+            stopwatchButton.textContent = 'Stop';
+            stopwatchInterval = setInterval(() => {
+                elapsedTime += 0.01;
+                stopwatchTime.textContent = elapsedTime.toFixed(2);
+            }, 10); // Update every 10ms to get 2 decimal places
+        }
+
+        function stopStopwatch() {
+            stopwatchRunning = false;
+            clearInterval(stopwatchInterval);
+            stopwatchButton.textContent = 'Reset';
+        }
+
+        function resetStopwatch() {
+            stopwatchRunning = false;
+            clearInterval(stopwatchInterval);
+            elapsedTime = 0;
+            stopwatchTime.textContent = '00.00';
+            stopwatchButton.textContent = 'Start';
+        }
+
+        stopwatchButton.addEventListener('click', () => {
+            if (stopwatchRunning) {
+                stopStopwatch();
+            } else if (stopwatchButton.textContent === 'Start') {
+                startStopwatch();
+            } else if (stopwatchButton.textContent === 'Reset') {
+                resetStopwatch();
+            }
+        });
+
     </script>
 </body>
 </html>
