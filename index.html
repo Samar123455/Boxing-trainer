@@ -62,36 +62,87 @@
         .checkbox-section h5 {
             margin: 0;
         }
+      .advanced-settings {
+    position: absolute;
+    bottom: 5%;
+    right: 5%;
+    text-align: right;
+}
+#stopwatch-container {
+    position: absolute;
+    top: 5%;
+    right: 5%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 128, 0, 0.8); /* Slightly transparent green */
+    border-radius: 10px;
+    padding: 10px;
+    width: calc(75% * 25vw); /* 75% of top button's width */
+    height: calc(75% * 25vh); /* 75% of top button's height */
+    text-align: center;
+}
+
+#stopwatch-display {
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 10px;
+}
+
+#stopwatch-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    background-color: green;
+    color: white;
+    cursor: pointer;
+}
+
+#advanced-settings-button {
+    padding: 10px 15px;
+    background-color: green;
+    color: white;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.advanced-settings-options {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-align: left;
+    background-color: rgba(0, 0, 0, 0.05);
+    padding: 10px;
+    border-radius: 5px;
+}
+#sound-file-imports button {
+    padding: 5px 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+    margin-top: 10px;
+    border-radius: 5px;
+}
+#sound-file-imports button:hover {
+    background-color: #45a049;
+}
+
+#sound-assistance-slider {
+    margin-top: 10px;
+    width: 100%;
+}
+
         .hidden-inputs {
             margin-top: 5px;
             display: none;
             gap: 10px;
-        }
-
-        /* Stopwatch Styles */
-        #stopwatch-container {
-            position: absolute;
-            top: 5%;
-            right: 5%;
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 20px;
-            width: 100px;
-            text-align: center;
-        }
-
-        #stopwatch-button {
-            background-color: green;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            font-size: 14px;
-            margin-top: 10px;
-            cursor: pointer;
-            border-radius: 3px;
-            width: 100%;
         }
     </style>
 </head>
@@ -118,14 +169,30 @@
         <div class="hidden-inputs" id="hook-uppercut-inputs">
             <input type="number" id="hook-uppercut-interval" placeholder="Time Interval (s)">
             <input type="number" id="hook-uppercut-appearance" placeholder="Appearance in Moves">
+          
         </div>
     </div>
+  <!-- Below the checkbox-section div -->
+<div class="advanced-settings">
+    <button id="advanced-settings-button">Advanced Settings</button>
+    <div class="advanced-settings-options" style="display: none;">
+        <label><input type="checkbox" id="sound-assistance"> Sound Assistance</label>
+        <input type="range" id="sound-assistance-slider" min="1" max="10" style="display: none;">
+      <!-- Below sound-assistance-slider input -->
+<div id="sound-file-imports" style="display: none;">
+    <button id="import-sound-1">Import Sound 1</button>
+    <button id="import-sound-3">Import Sound 3</button>
+</div>
 
-    <!-- Stopwatch Section -->
-    <div id="stopwatch-container">
-        <div id="stopwatch-time">00.00</div>
-        <button id="stopwatch-button">Start</button>
+        <label><input type="checkbox" id="punch-sound"> Punch Sound</label>
     </div>
+</div>
+<!-- Above closing </body> -->
+<!-- Stopwatch Section -->
+<div id="stopwatch-container">
+    <div id="stopwatch-display">00.00</div>
+    <button id="stopwatch-button">Start</button>
+</div>
 
     <script>
         const buttons = [...document.querySelectorAll('.top-button, .bottom-buttons button')];
@@ -136,14 +203,69 @@
         const hookUppercutCheckbox = document.getElementById('hook-uppercut');
         const jabCrossInputs = document.getElementById('jab-cross-inputs');
         const hookUppercutInputs = document.getElementById('hook-uppercut-inputs');
-        const stopwatchTime = document.getElementById('stopwatch-time');
-        const stopwatchButton = document.getElementById('stopwatch-button');
         let interval = null;
+        let isJabCrossActive = false;
+        let isHookUppercutActive = false;
+// Advanced Settings Button
+const advancedSettingsButton = document.getElementById('advanced-settings-button');
+const advancedSettingsOptions = document.querySelector('.advanced-settings-options');
+const soundAssistanceCheckbox = document.getElementById('sound-assistance');
+const soundAssistanceSlider = document.getElementById('sound-assistance-slider');
 
-        // Stopwatch variables
-        let stopwatchInterval = null;
-        let stopwatchRunning = false;
-        let elapsedTime = 0;
+      // Import Sound Files
+const soundFileImports = document.getElementById('sound-file-imports');
+const importSound1Button = document.getElementById('import-sound-1');
+const importSound3Button = document.getElementById('import-sound-3');
+let sound1File = null;
+let sound3File = null;
+
+soundAssistanceCheckbox.addEventListener('change', () => {
+    soundFileImports.style.display = soundAssistanceCheckbox.checked ? 'block' : 'none';
+});
+
+// Handle file import for Sound 1
+importSound1Button.addEventListener('click', () => {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'audio/mp3';
+    
+    fileInput.addEventListener('change', () => {
+        const file = fileInput.files[0];
+        if (file) {
+            sound1File = file;
+            console.log('Sound 1 file imported:', file.name);
+        }
+    });
+    
+    fileInput.click();
+});
+
+// Handle file import for Sound 3
+importSound3Button.addEventListener('click', () => {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'audio/mp3';
+    
+    fileInput.addEventListener('change', () => {
+        const file = fileInput.files[0];
+        if (file) {
+            sound3File = file;
+            console.log('Sound 3 file imported:', file.name);
+        }
+    });
+    
+    fileInput.click();
+});
+
+      
+advancedSettingsButton.addEventListener('click', () => {
+    const isHidden = advancedSettingsOptions.style.display === 'none';
+    advancedSettingsOptions.style.display = isHidden ? 'block' : 'none';
+});
+
+soundAssistanceCheckbox.addEventListener('change', () => {
+    soundAssistanceSlider.style.display = soundAssistanceCheckbox.checked ? 'block' : 'none';
+});
 
         jabCrossCheckbox.addEventListener('change', () => {
             jabCrossInputs.style.display = jabCrossCheckbox.checked ? 'flex' : 'none';
@@ -157,34 +279,116 @@
             buttons.forEach(button => button.style.backgroundColor = 'green');
         }
 
-        function randomButtonRed() {
-            const randomIndex = Math.floor(Math.random() * buttons.length);
-            resetButtons();
-            buttons[randomIndex].style.backgroundColor = 'red';
-            setTimeout(() => buttons[randomIndex].style.backgroundColor = 'green', parseFloat(redDurationInput.value) * 1000 || 500);
-        }
+       function randomButtonRed() {
+    const randomIndex = Math.floor(Math.random() * buttons.length);
+    resetButtons();
+    buttons[randomIndex].style.backgroundColor = 'red';
+    soundAssistance(randomIndex); // Trigger sound assistance based on button index
+    setTimeout(() => buttons[randomIndex].style.backgroundColor = 'green', parseFloat(redDurationInput.value) * 1000 || 500);
+}
+
 
         function jabCrossAction(probability, interval) {
-            if (Math.random() < probability) {
-                buttons[1].style.backgroundColor = 'red';
+            if (Math.random() < probability && !isJabCrossActive && !isHookUppercutActive) {
+                isJabCrossActive = true;
+                resetButtons();
+                buttons[1].style.backgroundColor = 'red'; // Button 1 for Jab
                 setTimeout(() => {
-                    buttons[3].style.backgroundColor = 'red';
+                    buttons[3].style.backgroundColor = 'red'; // Button 3 for Cross
                     console.log("Jab & Cross");
-                    setTimeout(resetButtons, interval * 1000);
+                    setTimeout(() => {
+                        resetButtons();
+                        isJabCrossActive = false;
+                    }, interval * 1000);
                 }, interval * 1000);
             }
         }
 
         function hookUppercutAction(probability, interval) {
-            if (Math.random() < probability) {
-                buttons[0].style.backgroundColor = 'red';
+            if (Math.random() < probability && !isHookUppercutActive && !isJabCrossActive) {
+                isHookUppercutActive = true;
+                resetButtons();
+                buttons[0].style.backgroundColor = 'red'; // Button 0 for Hook
                 setTimeout(() => {
-                    buttons[2].style.backgroundColor = 'red';
+                    buttons[2].style.backgroundColor = 'red'; // Button 2 for Uppercut
                     console.log("Hook & Uppercut");
-                    setTimeout(resetButtons, interval * 1000);
+                    setTimeout(() => {
+                        resetButtons();
+                        isHookUppercutActive = false;
+                    }, interval * 1000);
                 }, interval * 1000);
             }
         }
+      // Sound Assistance Functionality
+// Sound Assistance Functionality
+// Sound Assistance Functionality
+function soundAssistance(buttonIndex) {
+    if (soundAssistanceCheckbox.checked) {
+        const sliderValue = parseInt(soundAssistanceSlider.value, 10) || 1; // Get slider value
+        const chance = Math.random() < 1 / sliderValue; // Execution probability based on slider value
+
+        if (chance) {
+            if (buttonIndex === 3 && sound3File) {
+                console.log('Playing imported sound_3: Triggered by Button 3 turning red');
+                const sound3 = new Audio(URL.createObjectURL(sound3File)); // Use the imported sound 3
+                sound3.play(); // Play imported sound_3
+            } else if (buttonIndex === 1 && sound1File) {
+                console.log('Playing imported sound_1: Triggered by Button 1 turning red');
+                const sound1 = new Audio(URL.createObjectURL(sound1File)); // Use the imported sound 1
+                sound1.play(); // Play imported sound_1
+            }
+        }
+    }
+}
+
+// Stopwatch Functionality
+let stopwatchInterval = null;
+let stopwatchTime = 0; // Time in seconds
+
+const stopwatchDisplay = document.getElementById('stopwatch-display');
+const stopwatchButton = document.getElementById('stopwatch-button');
+
+// Format time as 00.00
+function formatStopwatchTime(seconds) {
+    const minutes = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const secs = (seconds % 60).toFixed(2).padStart(5, '0');
+    return `${minutes}.${secs}`;
+}
+
+// Start the stopwatch
+function startStopwatch() {
+    stopwatchInterval = setInterval(() => {
+        stopwatchTime += 0.01; // Increment time by 0.01 seconds
+        stopwatchDisplay.textContent = formatStopwatchTime(stopwatchTime);
+    }, 10); // Update every 10ms
+    stopwatchButton.textContent = 'Stop';
+}
+
+// Stop the stopwatch
+function stopStopwatch() {
+    clearInterval(stopwatchInterval);
+    stopwatchInterval = null;
+    stopwatchButton.textContent = 'Reset';
+}
+
+// Reset the stopwatch
+function resetStopwatch() {
+    stopwatchTime = 0;
+    stopwatchDisplay.textContent = formatStopwatchTime(stopwatchTime);
+    stopwatchButton.textContent = 'Start';
+}
+
+// Stopwatch Button Click Event
+stopwatchButton.addEventListener('click', () => {
+    if (stopwatchInterval === null && stopwatchButton.textContent === 'Start') {
+        startStopwatch();
+    } else if (stopwatchInterval !== null) {
+        stopStopwatch();
+    } else {
+        resetStopwatch();
+    }
+});
+
 
         startStopButton.addEventListener('click', () => {
             if (interval) {
@@ -203,6 +407,7 @@
                     alert('Please enter a valid interval in seconds.');
                     return;
                 }
+
                 resetButtons();
                 startStopButton.textContent = 'Stop';
                 interval = setInterval(() => {
@@ -212,41 +417,430 @@
                 }, intervalTime);
             }
         });
-
-        // Stopwatch functions
-        function startStopwatch() {
-            stopwatchRunning = true;
-            stopwatchButton.textContent = 'Stop';
-            stopwatchInterval = setInterval(() => {
-                elapsedTime += 0.01;
-                stopwatchTime.textContent = elapsedTime.toFixed(2);
-            }, 10); // Update every 10ms to get 2 decimal places
-        }
-
-        function stopStopwatch() {
-            stopwatchRunning = false;
-            clearInterval(stopwatchInterval);
-            stopwatchButton.textContent = 'Reset';
-        }
-
-        function resetStopwatch() {
-            stopwatchRunning = false;
-            clearInterval(stopwatchInterval);
-            elapsedTime = 0;
-            stopwatchTime.textContent = '00.00';
-            stopwatchButton.textContent = 'Start';
-        }
-
-        stopwatchButton.addEventListener('click', () => {
-            if (stopwatchRunning) {
-                stopStopwatch();
-            } else if (stopwatchButton.textContent === 'Start') {
-                startStopwatch();
-            } else if (stopwatchButton.textContent === 'Reset') {
-                resetStopwatch();
-            }
-        });
-
     </script>
 </body>
 </html>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Reflex Training</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .top-button {
+            width: 100%;
+            height: 25%;
+            background-color: green;
+            border: none;
+            outline: none;
+            cursor: pointer;
+        }
+        .bottom-buttons {
+            display: flex;
+            width: 100%;
+            height: 75%;
+        }
+        .bottom-buttons button {
+            flex: 1;
+            background-color: green;
+            border: none;
+            outline: none;
+            cursor: pointer;
+        }
+        .controls {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        input[type="number"] {
+            padding: 10px;
+            font-size: 16px;
+            width: 100px;
+        }
+        button#start-stop {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .checkbox-section {
+            position: absolute;
+            bottom: 5%;
+            left: 5%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .checkbox-section h5 {
+            margin: 0;
+        }
+      .advanced-settings {
+    position: absolute;
+    bottom: 5%;
+    right: 5%;
+    text-align: right;
+}
+#stopwatch-container {
+    position: absolute;
+    top: 5%;
+    right: 5%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 128, 0, 0.8); /* Slightly transparent green */
+    border-radius: 10px;
+    padding: 10px;
+    width: calc(75% * 25vw); /* 75% of top button's width */
+    height: calc(75% * 25vh); /* 75% of top button's height */
+    text-align: center;
+}
+
+#stopwatch-display {
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 10px;
+}
+
+#stopwatch-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    background-color: green;
+    color: white;
+    cursor: pointer;
+}
+
+#advanced-settings-button {
+    padding: 10px 15px;
+    background-color: green;
+    color: white;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.advanced-settings-options {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-align: left;
+    background-color: rgba(0, 0, 0, 0.05);
+    padding: 10px;
+    border-radius: 5px;
+}
+#sound-file-imports button {
+    padding: 5px 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+    margin-top: 10px;
+    border-radius: 5px;
+}
+#sound-file-imports button:hover {
+    background-color: #45a049;
+}
+
+#sound-assistance-slider {
+    margin-top: 10px;
+    width: 100%;
+}
+
+        .hidden-inputs {
+            margin-top: 5px;
+            display: none;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <button class="top-button"></button>
+    <div class="bottom-buttons">
+        <button></button>
+        <button></button>
+        <button></button>
+    </div>
+    <div class="controls">
+        <input type="number" id="interval" placeholder="Interval (s)">
+        <input type="number" id="red-duration" placeholder="Red Duration (s)">
+        <button id="start-stop">Start</button>
+    </div>
+    <div class="checkbox-section">
+        <h4>Options:</h4>
+        <label><input type="checkbox" id="jab-cross"> Jab & Cross</label>
+        <div class="hidden-inputs" id="jab-cross-inputs">
+            <input type="number" id="jab-cross-interval" placeholder="Time Interval (s)">
+            <input type="number" id="jab-cross-appearance" placeholder="Appearance in Moves">
+        </div>
+        <label><input type="checkbox" id="hook-uppercut"> Hook & Uppercut</label>
+        <div class="hidden-inputs" id="hook-uppercut-inputs">
+            <input type="number" id="hook-uppercut-interval" placeholder="Time Interval (s)">
+            <input type="number" id="hook-uppercut-appearance" placeholder="Appearance in Moves">
+          
+        </div>
+    </div>
+  <!-- Below the checkbox-section div -->
+<div class="advanced-settings">
+    <button id="advanced-settings-button">Advanced Settings</button>
+    <div class="advanced-settings-options" style="display: none;">
+        <label><input type="checkbox" id="sound-assistance"> Sound Assistance</label>
+        <input type="range" id="sound-assistance-slider" min="1" max="10" style="display: none;">
+      <!-- Below sound-assistance-slider input -->
+<div id="sound-file-imports" style="display: none;">
+    <button id="import-sound-1">Import Sound 1</button>
+    <button id="import-sound-3">Import Sound 3</button>
+</div>
+
+        <label><input type="checkbox" id="punch-sound"> Punch Sound</label>
+    </div>
+</div>
+<!-- Above closing </body> -->
+<!-- Stopwatch Section -->
+<div id="stopwatch-container">
+    <div id="stopwatch-display">00.00</div>
+    <button id="stopwatch-button">Start</button>
+</div>
+
+    <script>
+        const buttons = [...document.querySelectorAll('.top-button, .bottom-buttons button')];
+        const intervalInput = document.getElementById('interval');
+        const redDurationInput = document.getElementById('red-duration');
+        const startStopButton = document.getElementById('start-stop');
+        const jabCrossCheckbox = document.getElementById('jab-cross');
+        const hookUppercutCheckbox = document.getElementById('hook-uppercut');
+        const jabCrossInputs = document.getElementById('jab-cross-inputs');
+        const hookUppercutInputs = document.getElementById('hook-uppercut-inputs');
+        let interval = null;
+        let isJabCrossActive = false;
+        let isHookUppercutActive = false;
+// Advanced Settings Button
+const advancedSettingsButton = document.getElementById('advanced-settings-button');
+const advancedSettingsOptions = document.querySelector('.advanced-settings-options');
+const soundAssistanceCheckbox = document.getElementById('sound-assistance');
+const soundAssistanceSlider = document.getElementById('sound-assistance-slider');
+
+      // Import Sound Files
+const soundFileImports = document.getElementById('sound-file-imports');
+const importSound1Button = document.getElementById('import-sound-1');
+const importSound3Button = document.getElementById('import-sound-3');
+let sound1File = null;
+let sound3File = null;
+
+soundAssistanceCheckbox.addEventListener('change', () => {
+    soundFileImports.style.display = soundAssistanceCheckbox.checked ? 'block' : 'none';
+});
+
+// Handle file import for Sound 1
+importSound1Button.addEventListener('click', () => {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'audio/mp3';
+    
+    fileInput.addEventListener('change', () => {
+        const file = fileInput.files[0];
+        if (file) {
+            sound1File = file;
+            console.log('Sound 1 file imported:', file.name);
+        }
+    });
+    
+    fileInput.click();
+});
+
+// Handle file import for Sound 3
+importSound3Button.addEventListener('click', () => {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'audio/mp3';
+    
+    fileInput.addEventListener('change', () => {
+        const file = fileInput.files[0];
+        if (file) {
+            sound3File = file;
+            console.log('Sound 3 file imported:', file.name);
+        }
+    });
+    
+    fileInput.click();
+});
+
+      
+advancedSettingsButton.addEventListener('click', () => {
+    const isHidden = advancedSettingsOptions.style.display === 'none';
+    advancedSettingsOptions.style.display = isHidden ? 'block' : 'none';
+});
+
+soundAssistanceCheckbox.addEventListener('change', () => {
+    soundAssistanceSlider.style.display = soundAssistanceCheckbox.checked ? 'block' : 'none';
+});
+
+        jabCrossCheckbox.addEventListener('change', () => {
+            jabCrossInputs.style.display = jabCrossCheckbox.checked ? 'flex' : 'none';
+        });
+
+        hookUppercutCheckbox.addEventListener('change', () => {
+            hookUppercutInputs.style.display = hookUppercutCheckbox.checked ? 'flex' : 'none';
+        });
+
+        function resetButtons() {
+            buttons.forEach(button => button.style.backgroundColor = 'green');
+        }
+
+       function randomButtonRed() {
+    const randomIndex = Math.floor(Math.random() * buttons.length);
+    resetButtons();
+    buttons[randomIndex].style.backgroundColor = 'red';
+    soundAssistance(randomIndex); // Trigger sound assistance based on button index
+    setTimeout(() => buttons[randomIndex].style.backgroundColor = 'green', parseFloat(redDurationInput.value) * 1000 || 500);
+}
+
+
+        function jabCrossAction(probability, interval) {
+            if (Math.random() < probability && !isJabCrossActive && !isHookUppercutActive) {
+                isJabCrossActive = true;
+                resetButtons();
+                buttons[1].style.backgroundColor = 'red'; // Button 1 for Jab
+                setTimeout(() => {
+                    buttons[3].style.backgroundColor = 'red'; // Button 3 for Cross
+                    console.log("Jab & Cross");
+                    setTimeout(() => {
+                        resetButtons();
+                        isJabCrossActive = false;
+                    }, interval * 1000);
+                }, interval * 1000);
+            }
+        }
+
+        function hookUppercutAction(probability, interval) {
+            if (Math.random() < probability && !isHookUppercutActive && !isJabCrossActive) {
+                isHookUppercutActive = true;
+                resetButtons();
+                buttons[0].style.backgroundColor = 'red'; // Button 0 for Hook
+                setTimeout(() => {
+                    buttons[2].style.backgroundColor = 'red'; // Button 2 for Uppercut
+                    console.log("Hook & Uppercut");
+                    setTimeout(() => {
+                        resetButtons();
+                        isHookUppercutActive = false;
+                    }, interval * 1000);
+                }, interval * 1000);
+            }
+        }
+      // Sound Assistance Functionality
+// Sound Assistance Functionality
+// Sound Assistance Functionality
+function soundAssistance(buttonIndex) {
+    if (soundAssistanceCheckbox.checked) {
+        const sliderValue = parseInt(soundAssistanceSlider.value, 10) || 1; // Get slider value
+        const chance = Math.random() < 1 / sliderValue; // Execution probability based on slider value
+
+        if (chance) {
+            if (buttonIndex === 3 && sound3File) {
+                console.log('Playing imported sound_3: Triggered by Button 3 turning red');
+                const sound3 = new Audio(URL.createObjectURL(sound3File)); // Use the imported sound 3
+                sound3.play(); // Play imported sound_3
+            } else if (buttonIndex === 1 && sound1File) {
+                console.log('Playing imported sound_1: Triggered by Button 1 turning red');
+                const sound1 = new Audio(URL.createObjectURL(sound1File)); // Use the imported sound 1
+                sound1.play(); // Play imported sound_1
+            }
+        }
+    }
+}
+
+// Stopwatch Functionality
+let stopwatchInterval = null;
+let stopwatchTime = 0; // Time in seconds
+
+const stopwatchDisplay = document.getElementById('stopwatch-display');
+const stopwatchButton = document.getElementById('stopwatch-button');
+
+// Format time as 00.00
+function formatStopwatchTime(seconds) {
+    const minutes = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const secs = (seconds % 60).toFixed(2).padStart(5, '0');
+    return `${minutes}.${secs}`;
+}
+
+// Start the stopwatch
+function startStopwatch() {
+    stopwatchInterval = setInterval(() => {
+        stopwatchTime += 0.01; // Increment time by 0.01 seconds
+        stopwatchDisplay.textContent = formatStopwatchTime(stopwatchTime);
+    }, 10); // Update every 10ms
+    stopwatchButton.textContent = 'Stop';
+}
+
+// Stop the stopwatch
+function stopStopwatch() {
+    clearInterval(stopwatchInterval);
+    stopwatchInterval = null;
+    stopwatchButton.textContent = 'Reset';
+}
+
+// Reset the stopwatch
+function resetStopwatch() {
+    stopwatchTime = 0;
+    stopwatchDisplay.textContent = formatStopwatchTime(stopwatchTime);
+    stopwatchButton.textContent = 'Start';
+}
+
+// Stopwatch Button Click Event
+stopwatchButton.addEventListener('click', () => {
+    if (stopwatchInterval === null && stopwatchButton.textContent === 'Start') {
+        startStopwatch();
+    } else if (stopwatchInterval !== null) {
+        stopStopwatch();
+    } else {
+        resetStopwatch();
+    }
+});
+
+
+        startStopButton.addEventListener('click', () => {
+            if (interval) {
+                clearInterval(interval);
+                interval = null;
+                startStopButton.textContent = 'Start';
+                resetButtons();
+            } else {
+                const intervalTime = parseFloat(intervalInput.value) * 1000;
+                const jabCrossProb = 1 / (parseFloat(document.getElementById('jab-cross-appearance').value) || Infinity);
+                const jabCrossInterval = parseFloat(document.getElementById('jab-cross-interval').value) || 0.3;
+                const hookUppercutProb = 1 / (parseFloat(document.getElementById('hook-uppercut-appearance').value) || Infinity);
+                const hookUppercutInterval = parseFloat(document.getElementById('hook-uppercut-interval').value) || 0.3;
+
+                if (isNaN(intervalTime) || intervalTime <= 0) {
+                    alert('Please enter a valid interval in seconds.');
+                    return;
+                }
+
+                resetButtons();
+                startStopButton.textContent = 'Stop';
+                interval = setInterval(() => {
+                    randomButtonRed();
+                    if (jabCrossCheckbox.checked) jabCrossAction(jabCrossProb, jabCrossInterval);
+                    if (hookUppercutCheckbox.checked) hookUppercutAction(hookUppercutProb, hookUppercutInterval);
+                }, intervalTime);
+            }
+        });
+    </script>
+</body>
+</html>
+
