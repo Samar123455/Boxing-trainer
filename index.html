@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -138,6 +139,11 @@
     margin-top: 10px;
     width: 100%;
 }
+      #punch-assistance-slider {
+    margin-top: 10px;
+    width: 100%;
+}
+
 
         .hidden-inputs {
             margin-top: 5px;
@@ -185,6 +191,17 @@
 </div>
 
         <label><input type="checkbox" id="punch-sound"> Punch Sound</label>
+      <label><input type="checkbox" id="punch-assistance"> Punch Assistance</label>
+<input type="range" id="punch-assistance-slider" min="1" max="10" style="display: none;">
+<div id="punch-assistance-timing" style="display: none;">
+    <label for="punch-assistance-delay">Orange Delay (seconds):</label>
+    <input type="number" id="punch-assistance-delay" min="0" step="0.1" value="0.3" />
+    <br>
+    <label for="punch-assistance-duration">Orange Duration (seconds):</label>
+    <input type="number" id="punch-assistance-duration" min="0" step="0.1" value="0.3" />
+</div>
+
+
     </div>
 </div>
 <!-- Above closing </body> -->
@@ -218,11 +235,61 @@ const importSound1Button = document.getElementById('import-sound-1');
 const importSound3Button = document.getElementById('import-sound-3');
 let sound1File = null;
 let sound3File = null;
+      const punchAssistanceCheckbox = document.getElementById('punch-assistance');
+const punchAssistanceSlider = document.getElementById('punch-assistance-slider');
+   
+      const punchAssistanceTiming = document.getElementById('punch-assistance-timing');
+
+punchAssistanceCheckbox.addEventListener('change', () => {
+    const isChecked = punchAssistanceCheckbox.checked;
+    punchAssistanceSlider.style.display = isChecked ? 'block' : 'none';
+    punchAssistanceTiming.style.display = isChecked ? 'block' : 'none';
+});
+
+
+
+// Punch Assistance Function
+function punchAssistance(buttonIndex) {
+    if (punchAssistanceCheckbox.checked && !isJabCrossActive && !isHookUppercutActive) { 
+        // Proceed only if Jab & Cross or Hook & Uppercut are not active
+        const sliderValue = parseInt(punchAssistanceSlider.value, 10) || 1; // Probability slider value
+        const chance = Math.random() < 1 / sliderValue;
+
+        // Fetch timing values
+        const orangeDelay = parseFloat(document.getElementById('punch-assistance-delay').value) * 1000 || 300;
+        const orangeDuration = parseFloat(document.getElementById('punch-assistance-duration').value) * 1000 || 300;
+
+        if (chance) {
+            if (buttonIndex === 1) {
+                console.log("Punch Assistance Triggered: Button 1 -> Button 3");
+                setTimeout(() => {
+                    buttons[3].style.backgroundColor = 'orange'; // Turn Button 3 orange
+                    setTimeout(() => {
+                        buttons[3].style.backgroundColor = 'green'; // Reset Button 3
+                    }, orangeDuration); // Orange active time
+                }, orangeDelay); // Delay before turning orange
+            } else if (buttonIndex === 3) {
+                console.log("Punch Assistance Triggered: Button 3 -> Button 1");
+                setTimeout(() => {
+                    buttons[1].style.backgroundColor = 'orange'; // Turn Button 1 orange
+                    setTimeout(() => {
+                        buttons[1].style.backgroundColor = 'green'; // Reset Button 1
+                    }, orangeDuration); // Orange active time
+                }, orangeDelay); // Delay before turning orange
+            }
+        }
+    }
+}
+
+
+
+
 
 soundAssistanceCheckbox.addEventListener('change', () => {
     soundFileImports.style.display = soundAssistanceCheckbox.checked ? 'block' : 'none';
 });
 
+      
 // Handle file import for Sound 1
 importSound1Button.addEventListener('click', () => {
     const fileInput = document.createElement('input');
@@ -279,13 +346,18 @@ soundAssistanceCheckbox.addEventListener('change', () => {
             buttons.forEach(button => button.style.backgroundColor = 'green');
         }
 
-       function randomButtonRed() {
+      function randomButtonRed() {
     const randomIndex = Math.floor(Math.random() * buttons.length);
     resetButtons();
     buttons[randomIndex].style.backgroundColor = 'red';
+
     soundAssistance(randomIndex); // Trigger sound assistance based on button index
+    punchAssistance(randomIndex); // Trigger punch assistance based on button index
+
     setTimeout(() => buttons[randomIndex].style.backgroundColor = 'green', parseFloat(redDurationInput.value) * 1000 || 500);
 }
+
+
 
 
         function jabCrossAction(probability, interval) {
@@ -390,34 +462,65 @@ stopwatchButton.addEventListener('click', () => {
 });
 
 
-        startStopButton.addEventListener('click', () => {
-            if (interval) {
-                clearInterval(interval);
-                interval = null;
-                startStopButton.textContent = 'Start';
-                resetButtons();
-            } else {
-                const intervalTime = parseFloat(intervalInput.value) * 1000;
-                const jabCrossProb = 1 / (parseFloat(document.getElementById('jab-cross-appearance').value) || Infinity);
-                const jabCrossInterval = parseFloat(document.getElementById('jab-cross-interval').value) || 0.3;
-                const hookUppercutProb = 1 / (parseFloat(document.getElementById('hook-uppercut-appearance').value) || Infinity);
-                const hookUppercutInterval = parseFloat(document.getElementById('hook-uppercut-interval').value) || 0.3;
+    startStopButton.addEventListener('click', () => {
+    if (interval) {
+        // Stop all actions
+        clearInterval(interval);
+        interval = null;
+        startStopButton.textContent = 'Start';
 
-                if (isNaN(intervalTime) || intervalTime <= 0) {
-                    alert('Please enter a valid interval in seconds.');
-                    return;
-                }
+        // Reset visibility to show all elements
+        toggleElementsVisibility(false);
+        resetButtons();
+    } else {
+        // Start actions
+        const intervalTime = parseFloat(intervalInput.value) * 1000;
+        const jabCrossProb = 1 / (parseFloat(document.getElementById('jab-cross-appearance').value) || Infinity);
+        const jabCrossInterval = parseFloat(document.getElementById('jab-cross-interval').value) || 0.3;
+        const hookUppercutProb = 1 / (parseFloat(document.getElementById('hook-uppercut-appearance').value) || Infinity);
+        const hookUppercutInterval = parseFloat(document.getElementById('hook-uppercut-interval').value) || 0.3;
 
-                resetButtons();
-                startStopButton.textContent = 'Stop';
-                interval = setInterval(() => {
-                    randomButtonRed();
-                    if (jabCrossCheckbox.checked) jabCrossAction(jabCrossProb, jabCrossInterval);
-                    if (hookUppercutCheckbox.checked) hookUppercutAction(hookUppercutProb, hookUppercutInterval);
-                }, intervalTime);
-            }
-        });
+        if (isNaN(intervalTime) || intervalTime <= 0) {
+            alert('Please enter a valid interval in seconds.');
+            return;
+        }
+
+        resetButtons();
+        startStopButton.textContent = 'Stop';
+
+        // Hide options, Jab & Cross, Hook & Uppercut, but keep the stopwatch visible
+        toggleElementsVisibility(true);
+
+        interval = setInterval(() => {
+            randomButtonRed();
+            if (jabCrossCheckbox.checked) jabCrossAction(jabCrossProb, jabCrossInterval);
+            if (hookUppercutCheckbox.checked) hookUppercutAction(hookUppercutProb, hookUppercutInterval);
+        }, intervalTime);
+    }
+});
+
+
+
+      
+    function toggleElementsVisibility(hide) {
+    // Select elements to hide (excluding stopwatch)
+    const elementsToHide = document.querySelectorAll(
+        '.advanced-settings-options, #advanced-settings-button, #interval, #red-duration, #jab-cross-inputs, #hook-uppercut-inputs, #sound-assistance-slider, #sound-file-imports, #punch-assistance-slider-container'
+    );
+
+    elementsToHide.forEach(element => {
+        element.style.display = hide ? 'none' : ''; // Hide if `hide` is true, otherwise show
+    });
+
+    // Ensure stopwatch and buttons remain visible
+    const alwaysVisible = document.querySelectorAll('#stopwatch-container, .top-button, .bottom-buttons button');
+    alwaysVisible.forEach(element => {
+        element.style.display = ''; // Always show
+    });
+}
+
+
+
     </script>
 </body>
 </html>
-
